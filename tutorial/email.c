@@ -99,7 +99,11 @@ int checkLocal(char *s){
 
 //function to check if the domain part of the email i correct
 int checkDomain(char *s){
-
+	//check if the string contains a '.' or not
+	if(strchr(s) == NULL){
+		return 1;
+	}
+	//TODO: the rest of this function
 }
 
 int isLetterDigit(char c){
