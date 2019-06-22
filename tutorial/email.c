@@ -33,30 +33,70 @@ email_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	Email    *result;
 
-	if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
+	//TODO: check if the input complies with the guideline
+	char *first = strtok(str,"@");
+	char *second = strtok(NULL, "@");
+	//check if the email is correct,if not ereport, else continue
+	if((checkLocal(first) == 1 &&checkDomain(second) == 1){
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for complex: \"%s\"",
 						str)));
+	}
 
 	result = (Email *) palloc(sizeof(Email));
-	result->first = strtok(str, "@");
-	result->second = strtok(null,"@");
+	result->first = first;
+	result->second = second;
 	PG_RETURN_POINTER(result);
 }
 
-PG_FUNCTION_INFO_V1(complex_out);
+PG_FUNCTION_INFO_V1(email_out);
 
 Datum
-complex_out(PG_FUNCTION_ARGS)
+email_out(PG_FUNCTION_ARGS)
 {
-	Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
+	Email    *email = (Email *) PG_GETARG_POINTER(0);
 	char	   *result;
 
-	result = psprintf("(%g,%g)", complex->x, complex->y);
+	result = psprintf("%s@%s", email->first, email->second);
 	PG_RETURN_CSTRING(result);
 }
 
+//function to check if the local part of the email is correct
+int checkLocal(char *s){
+
+	int length = strlen(s);
+	char previous = s[0]; //previous char to check .
+	//if first character is not a letter, fail
+	if(isalpha(s[0])==0){
+		return 1;
+	}
+	for(int x = 0; x < length; x++){
+		if(isLetterDigit(s[x] == 0)){
+			return 1;
+		}
+		//check if the previous char is . then the first char after must be a letter (e.g. john.2li@unsw.edu.au is false)
+		if(previous == '.' && isalpha(s[x]) == 0){
+			return 1;
+		}
+		//TODO: check case when end of word isn't a letter or  digit
+
+		//keeps track of the previous char
+		previous = s[x];
+	}
+}
+
+//function to check if the domain part of the email i correct
+int checkDomain(char *s){
+
+}
+
+int isLetterDigit(char c){
+	if(isalpha(c) || isdigit(c)|| c =='.'|| c =='-'){
+		return 1;
+	}
+	return 0;
+}
 /*****************************************************************************
  * Binary Input/Output functions
  *
