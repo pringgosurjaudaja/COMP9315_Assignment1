@@ -16,8 +16,8 @@ PG_MODULE_MAGIC;
 
 typedef struct Email
 {
-	char first[128];
-	char second[128];
+	char *first;
+	char *second;
 }			Email;
 
 
@@ -44,7 +44,8 @@ email_in(PG_FUNCTION_ARGS)
 						str)));
 	}
 
-	result = (Email *) palloc(sizeof(Email));
+	//result = (Email *) palloc(sizeof(Email));
+	result = (Email *) palloc(sizeof(char[strlen(first)]) + sizeof(char[strlen(second)]));
 	result->first = first;
 	result->second = second;
 	PG_RETURN_POINTER(result);
@@ -67,47 +68,32 @@ int checkLocal(char *s){
 
 	int length = strlen(s);
 	char previous = s[0]; //previous char to check .
-	//if there is no word at all, fail
-	if(length == 0){
-		return 1;
-	}
 	//if first character is not a letter, fail
 	if(isalpha(s[0])==0){
 		return 1;
 	}
 	for(int x = 0; x < length; x++){
-		//check if the char is either a letter, digit, -, or ., if not then fail
-		if(isLetterDigit(s[x])== 0 || s[x] != '-'||s[x] !='.'){
+		if(isLetterDigit(s[x] == 0)){
 			return 1;
 		}
 		//check if the previous char is . then the first char after must be a letter (e.g. john.2li@unsw.edu.au is false)
 		if(previous == '.' && isalpha(s[x]) == 0){
 			return 1;
 		}
-		//check case when end of word isn't a letter or  digit
-		if(str[x] =='.' && isLetterDigit(previous) == 0){
-			return 1;
-		}
+		//TODO: check case when end of word isn't a letter or  digit
+
 		//keeps track of the previous char
 		previous = s[x];
 	}
-	if(isLetterDigit(s[length-1]) == 0){
-		return 1;
-	}
-	return 0;
 }
 
 //function to check if the domain part of the email i correct
 int checkDomain(char *s){
-	//check if the string contains a '.' or not
-	if(strchr(s) == NULL){
-		return 1;
-	}
-	//TODO: the rest of this function
+
 }
 
 int isLetterDigit(char c){
-	if(isalpha(c) || isdigit(c)){
+	if(isalpha(c) || isdigit(c)|| c =='.'|| c =='-'){
 		return 1;
 	}
 	return 0;
