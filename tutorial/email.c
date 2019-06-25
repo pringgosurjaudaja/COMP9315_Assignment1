@@ -43,7 +43,7 @@ email_in(PG_FUNCTION_ARGS)
 	if((checkLocal(first) == 1 &&checkDomain(second) == 1){
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for complex: \"%s\"",
+				 errmsg("invalid input syntax for email: \"%s\"",
 						str)));
 	}
 
