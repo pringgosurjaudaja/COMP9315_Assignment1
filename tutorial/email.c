@@ -19,7 +19,19 @@ typedef struct Email
 	char *first;
 	char *second;
 }			Email;
-
+Datum	email_in(PG_FUNCTION_ARGS);
+Datum	email_out(PG_FUNCTION_ARGS);
+int checkLocal(char *s);
+int checkDomain(char *s);
+int isLetterDigit(char c);
+Datum	email_lt(PG_FUNCTION_ARGS);
+Datum	email_le(PG_FUNCTION_ARGS);
+Datum	email_eq(PG_FUNCTION_ARGS);
+Datum	email_neq(PG_FUNCTION_ARGS);
+Datum	email_gt(PG_FUNCTION_ARGS);
+Datum	email_ge(PG_FUNCTION_ARGS);
+Datum   email_domainNEq(PG_FUNCTION_ARGS);
+Datum   email_domainEq(PG_FUNCTION_ARGS);
 
 /*****************************************************************************
  * Input/Output functions
