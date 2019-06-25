@@ -52,7 +52,7 @@ email_in(PG_FUNCTION_ARGS)
 	char *first = strtok(str,"@");
 	char *second = strtok(NULL, "@");
 	//check if the email is correct,if not ereport, else continue
-	if((checkLocal(first) == 1 &&checkDomain(second) == 1){
+	if(checkLocal(first) == 1 &&checkDomain(second) == 1){
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for email: \"%s\"",
