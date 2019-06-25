@@ -249,7 +249,7 @@ email_domainEq(PG_FUNCTION_ARGS)
 	Email    *a = (Email *) PG_GETARG_POINTER(0);
 	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(email_cmp_internal(a->second, b->second)==0);
+	PG_RETURN_INT32(strcmp(a->second, b->second)==0);
 }
 
 PG_FUNCTION_INFO_V1(email_domainNEq);
@@ -260,5 +260,5 @@ email_domainNEq(PG_FUNCTION_ARGS)
 	Email    *a = (Email *) PG_GETARG_POINTER(0);
 	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(email_cmp_internal(a->second, b->second)!=0);
+	PG_RETURN_INT32(strcmp(a->second, b->second)!=0);
 }
