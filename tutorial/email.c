@@ -45,8 +45,10 @@ email_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	Email    *result;
 
-	for(int x = 0; str[x];x++){
+	int x =0;
+	while(str[x]){
 		str[x] = tolower(str[x]);
+		x++;	
 	}
 	//TODO: check if the input complies with the guideline
 	char *first = strtok(str,"@");
@@ -87,7 +89,8 @@ int checkLocal(char *s){
 	if(isalpha(s[0])==0){
 		return 1;
 	}
-	for(int x = 0; x < length; x++){
+	int x = 0;
+	while(x < length){
 		if(isLetterDigit(s[x] == 0)){
 			return 1;
 		}
@@ -99,6 +102,7 @@ int checkLocal(char *s){
 
 		//keeps track of the previous char
 		previous = s[x];
+		x++;	
 	}
 	if(isalpha(s[length])==0){
 		return 1;
@@ -115,7 +119,8 @@ int checkDomain(char *s){
 		if(isalpha(s[0])==0){
 			return 1;
 		}
-		for(int x = 0; x < length; x++){
+		int x = 0;
+		while(x < length){
 			if(isLetterDigit(s[x] == 0)){
 				return 1;
 			}
@@ -128,6 +133,7 @@ int checkDomain(char *s){
 
 			//keeps track of the previous char
 			previous = s[x];
+			x++;
 		}
 	if(period ==0){
 		return 1;
