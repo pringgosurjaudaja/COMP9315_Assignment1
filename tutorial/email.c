@@ -14,7 +14,7 @@
 #include <ctype.h>
 PG_MODULE_MAGIC;
 
-typedef struct Email
+typedef struct _email
 {
 	char *first;
 	char *second;
