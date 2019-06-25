@@ -11,7 +11,7 @@
 #include <string.h>
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
-
+#include <ctype.h>
 PG_MODULE_MAGIC;
 
 typedef struct Email
