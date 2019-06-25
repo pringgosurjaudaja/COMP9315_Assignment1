@@ -33,6 +33,9 @@ email_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	Email    *result;
 
+	for(int x = 0; str[x];x++){
+		str[x] = tolower(str[x]);
+	}
 	//TODO: check if the input complies with the guideline
 	char *first = strtok(str,"@");
 	char *second = strtok(NULL, "@");
@@ -85,11 +88,39 @@ int checkLocal(char *s){
 		//keeps track of the previous char
 		previous = s[x];
 	}
+	if(isalpha(s[length])==0){
+		return 1;
+	}
+	return 0;
 }
 
 //function to check if the domain part of the email i correct
 int checkDomain(char *s){
+	int length = strlen(s);
+	int period = 0;
+		char previous = s[0]; //previous char to check .
+		//if first character is not a letter, fail
+		if(isalpha(s[0])==0){
+			return 1;
+		}
+		for(int x = 0; x < length; x++){
+			if(isLetterDigit(s[x] == 0)){
+				return 1;
+			}
+			//check if the previous char is . then the first char after must be a letter (e.g. john.2li@unsw.edu.au is false)
+			if(previous == '.' && isalpha(s[x]) == 0){
+				period = 1;
+				return 1;
+			}
+			//TODO: check case when end of word isn't a letter or  digit
 
+			//keeps track of the previous char
+			previous = s[x];
+		}
+	if(period ==0){
+		return 1;
+	}
+	return 0;
 }
 
 int isLetterDigit(char c){
@@ -99,59 +130,11 @@ int isLetterDigit(char c){
 	return 0;
 }
 /*****************************************************************************
- * Binary Input/Output functions
- *
- * These are optional.
- *****************************************************************************/
-
-PG_FUNCTION_INFO_V1(complex_recv);
-
-Datum
-complex_recv(PG_FUNCTION_ARGS)
-{
-	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	Complex    *result;
-
-	result = (Complex *) palloc(sizeof(Complex));
-	result->x = pq_getmsgfloat8(buf);
-	result->y = pq_getmsgfloat8(buf);
-	PG_RETURN_POINTER(result);
-}
-
-PG_FUNCTION_INFO_V1(complex_send);
-
-Datum
-complex_send(PG_FUNCTION_ARGS)
-{
-	Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
-	StringInfoData buf;
-
-	pq_begintypsend(&buf);
-	pq_sendfloat8(&buf, complex->x);
-	pq_sendfloat8(&buf, complex->y);
-	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
-}
-
-/*****************************************************************************
  * New Operators
  *
  * A practical Complex datatype would provide much more than this, of course.
  *****************************************************************************/
 
-PG_FUNCTION_INFO_V1(complex_add);
-
-Datum
-complex_add(PG_FUNCTION_ARGS)
-{
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
-	Complex    *result;
-
-	result = (Complex *) palloc(sizeof(Complex));
-	result->x = a->x + b->x;
-	result->y = a->y + b->y;
-	PG_RETURN_POINTER(result);
-}
 
 
 /*****************************************************************************
@@ -168,81 +151,102 @@ complex_add(PG_FUNCTION_ARGS)
 #define Mag(c)	((c)->x*(c)->x + (c)->y*(c)->y)
 
 static int
-complex_abs_cmp_internal(Complex * a, Complex * b)
+email_cmp_internal(Email * a, Email * b)
 {
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	if (amag < bmag)
-		return -1;
-	if (amag > bmag)
-		return 1;
-	return 0;
+	if(strcmp(a->first,b->first)&&strcmp(a->second,b->second)){
+		return 0;
+	}
+	if(strcmp(a->first,b->first) != 0){
+		return strcmp(a->first,b->first);
+	}
+	return 1;
 }
 
 
-PG_FUNCTION_INFO_V1(complex_abs_lt);
+PG_FUNCTION_INFO_V1(email_lt);
 
 Datum
-complex_abs_lt(PG_FUNCTION_ARGS)
+email_lt(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) < 0);
+	PG_RETURN_BOOL(email_cmp_internal(a, b) < 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_le);
+PG_FUNCTION_INFO_V1(email_le);
 
 Datum
-complex_abs_le(PG_FUNCTION_ARGS)
+email_le(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+		Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) <= 0);
+	PG_RETURN_BOOL(email_cmp_internal(a, b) <= 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_eq);
+PG_FUNCTION_INFO_V1(email_neq);
 
 Datum
-complex_abs_eq(PG_FUNCTION_ARGS)
+email_neq(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) == 0);
+	PG_RETURN_BOOL(email_cmp_internal(a, b) != 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_ge);
+PG_FUNCTION_INFO_V1(email_eq);
 
 Datum
-complex_abs_ge(PG_FUNCTION_ARGS)
+email_eq(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) >= 0);
+	PG_RETURN_BOOL(email_cmp_internal(a, b) == 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_gt);
+PG_FUNCTION_INFO_V1(email_ge);
 
 Datum
-complex_abs_gt(PG_FUNCTION_ARGS)
+email_ge(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) > 0);
+	PG_RETURN_BOOL(email_cmp_internal(a, b) >= 0);
 }
 
-PG_FUNCTION_INFO_V1(complex_abs_cmp);
+PG_FUNCTION_INFO_V1(email_gt);
 
 Datum
-complex_abs_cmp(PG_FUNCTION_ARGS)
+email_gt(PG_FUNCTION_ARGS)
 {
-	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(complex_abs_cmp_internal(a, b));
+	PG_RETURN_BOOL(email_cmp_internal(a, b) > 0);
+}
+
+PG_FUNCTION_INFO_V1(email_domainEq);
+
+Datum
+email_domainEq(PG_FUNCTION_ARGS)
+{
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_INT32(email_cmp_internal(a->second, b->second)==0);
+}
+
+PG_FUNCTION_INFO_V1(email_domainNEq);
+
+Datum
+email_domainNEq(PG_FUNCTION_ARGS)
+{
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_INT32(email_cmp_internal(a->second, b->second)!=0);
 }
