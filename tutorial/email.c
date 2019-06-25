@@ -163,7 +163,7 @@ int isLetterDigit(char c){
 #define Mag(c)	((c)->x*(c)->x + (c)->y*(c)->y)
 
 static int
-email_cmp_internal(Email * a, Email * b)
+email_cmp_internal(Email a, Email b)
 {
 	if(strcmp(a->first,b->first)&&strcmp(a->second,b->second)){
 		return 0;
