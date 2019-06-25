@@ -33,46 +33,27 @@
 -- (in memory) representation. You will get a message telling you 'complex'
 -- does not exist yet but that's okay.
 
-CREATE FUNCTION complex_in(cstring)
-   RETURNS complex
-   AS '_OBJWD_/complex'
+CREATE FUNCTION email_in(cstring)
+   RETURNS email
+   AS '_OBJWD_/email'
    LANGUAGE C IMMUTABLE STRICT;
 
 -- the output function 'complex_out' takes the internal representation and
 -- converts it into the textual representation.
 
-CREATE FUNCTION complex_out(complex)
+CREATE FUNCTION complex_out(email)
    RETURNS cstring
-   AS '_OBJWD_/complex'
+   AS '_OBJWD_/email'
    LANGUAGE C IMMUTABLE STRICT;
-
--- the binary input function 'complex_recv' takes a StringInfo buffer
--- and turns its contents into the internal representation.
-
-CREATE FUNCTION complex_recv(internal)
-   RETURNS complex
-   AS '_OBJWD_/complex'
-   LANGUAGE C IMMUTABLE STRICT;
-
--- the binary output function 'complex_send' takes the internal representation
--- and converts it into a (hopefully) platform-independent bytea string.
-
-CREATE FUNCTION complex_send(complex)
-   RETURNS bytea
-   AS '_OBJWD_/complex'
-   LANGUAGE C IMMUTABLE STRICT;
-
 
 -- now, we can create the type. The internallength specifies the size of the
 -- memory block required to hold the type (we need two 8-byte doubles).
 
-CREATE TYPE complex (
-   internallength = 16,
-   input = complex_in,
-   output = complex_out,
-   receive = complex_recv,
-   send = complex_send,
-   alignment = double
+CREATE TYPE email (
+   internallength = 256,
+   input = email_in,
+   output = email_out,
+   alignment = char
 );
 
 
@@ -88,14 +69,6 @@ CREATE TABLE test_complex (
 	b	complex
 );
 
--- data for user-defined types are just strings in the proper textual
--- representation.
-
-INSERT INTO test_complex VALUES ('(1.0, 2.5)', '(4.2, 3.55 )');
-INSERT INTO test_complex VALUES ('(33.0, 51.4)', '(100.42, 93.55)');
-
-SELECT * FROM test_complex;
-
 -----------------------------
 -- Creating an operator for the new type:
 --	Let's define an add operator for complex types. Since POSTGRES
@@ -105,9 +78,9 @@ SELECT * FROM test_complex;
 -----------------------------
 
 -- first, define a function complex_add (also in complex.c)
-CREATE FUNCTION complex_add(complex, complex)
-   RETURNS complex
-   AS '_OBJWD_/complex'
+CREATE FUNCTION email_lt(email, email)
+   RETURNS bool
+   AS '_OBJWD_/email'
    LANGUAGE C IMMUTABLE STRICT;
 
 -- we can now define the operator. We show a binary operator here but you

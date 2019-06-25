@@ -8,7 +8,7 @@
 ******************************************************************************/
 
 #include "postgres.h"
-#inlcude <string.h>
+#include <string.h>
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
