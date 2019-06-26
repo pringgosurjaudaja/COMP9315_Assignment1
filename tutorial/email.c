@@ -30,8 +30,10 @@ Datum	email_eq(PG_FUNCTION_ARGS);
 Datum	email_neq(PG_FUNCTION_ARGS);
 Datum	email_gt(PG_FUNCTION_ARGS);
 Datum	email_ge(PG_FUNCTION_ARGS);
-Datum   email_domainNEq(PG_FUNCTION_ARGS);
-Datum   email_domainEq(PG_FUNCTION_ARGS);
+Datum   email_deq(PG_FUNCTION_ARGS);
+Datum   email_dneq(PG_FUNCTION_ARGS);
+Datum	email_cmp(PG_FUNCTION_ARGS);
+Datum   email_hv(PG_FUNCTION_ARGS);
 
 /*****************************************************************************
  * Input/Output functions
@@ -64,6 +66,8 @@ email_in(PG_FUNCTION_ARGS)
 	//result = (Email *) palloc(sizeof(Email));
 	result = (Email *) palloc(sizeof(char[strlen(first)]) + sizeof(char[strlen(second)]));
 	result->first = first;
+	//strcpy(result->first, first);
+	//strcpy(result->second, second);
 	result->second = second;
 	PG_RETURN_POINTER(result);
 }
@@ -75,8 +79,8 @@ email_out(PG_FUNCTION_ARGS)
 {
 	Email    *email = (Email *) PG_GETARG_POINTER(0);
 	char	   *result;
-
-	result = psprintf("%s@%s", email->first, email->second);
+	result = (char *)palloc(sizeof(email));
+	snprintf(result, sizeof(email), "%s@%s", email->first, email->second);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -104,7 +108,7 @@ int checkLocal(char *s){
 		previous = s[x];
 		x++;	
 	}
-	if(isalpha(s[length])==0){
+	if(isalpha(s[length-1])==0){
 		return 1;
 	}
 	return 0;
@@ -126,8 +130,10 @@ int checkDomain(char *s){
 			}
 			//check if the previous char is . then the first char after must be a letter (e.g. john.2li@unsw.edu.au is false)
 			if(previous == '.' && isalpha(s[x]) == 0){
-				period = 1;
 				return 1;
+			}
+			if(previous == '.' && isalpha(s[x]) == 1){
+				period = 1;
 			}
 			//TODO: check case when end of word isn't a letter or  digit
 
@@ -247,10 +253,10 @@ email_gt(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(email_cmp_internal(a, b) > 0);
 }
 
-PG_FUNCTION_INFO_V1(email_domainEq);
+PG_FUNCTION_INFO_V1(email_deq);
 
 Datum
-email_domainEq(PG_FUNCTION_ARGS)
+email_deq(PG_FUNCTION_ARGS)
 {
 	Email    *a = (Email *) PG_GETARG_POINTER(0);
 	Email    *b = (Email *) PG_GETARG_POINTER(1);
@@ -258,13 +264,27 @@ email_domainEq(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(strcmp(a->second, b->second)==0);
 }
 
-PG_FUNCTION_INFO_V1(email_domainNEq);
+PG_FUNCTION_INFO_V1(email_dneq);
 
 Datum
-email_domainNEq(PG_FUNCTION_ARGS)
+email_dneq(PG_FUNCTION_ARGS)
 {
 	Email    *a = (Email *) PG_GETARG_POINTER(0);
 	Email    *b = (Email *) PG_GETARG_POINTER(1);
 
 	PG_RETURN_INT32(strcmp(a->second, b->second)!=0);
+}
+PG_FUNCTION_INFO_V1(email_hv);
+Datum email_hv(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(1);
+}
+PG_FUNCTION_INFO_V1(email_cmp);
+Datum
+email_cmp(PG_FUNCTION_ARGS)
+{
+	Email    *a = (Email *) PG_GETARG_POINTER(0);
+	Email    *b = (Email *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_INT32(email_cmp_internal(a, b)!=0);
 }
