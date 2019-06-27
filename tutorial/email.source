@@ -34,14 +34,14 @@
 -- does not exist yet but that's okay.
 
 CREATE FUNCTION email_in(cstring)
-   RETURNS email
+   RETURNS EmailAddr
    AS '_OBJWD_/email'
    LANGUAGE C IMMUTABLE STRICT;
 
 -- the output function 'complex_out' takes the internal representation and
 -- converts it into the textual representation.
 
-CREATE FUNCTION email_out(email)
+CREATE FUNCTION email_out(EmailAddr)
    RETURNS cstring
    AS '_OBJWD_/email'
    LANGUAGE C IMMUTABLE STRICT;
@@ -49,11 +49,11 @@ CREATE FUNCTION email_out(email)
 -- now, we can create the type. The internallength specifies the size of the
 -- memory block required to hold the type (we need two 8-byte doubles).
 
-CREATE TYPE email (
-   internallength = 256,
+CREATE TYPE EmailAddr (
+   internallength = 512,
    input = email_in,
    output = email_out,
-   alignment = double
+   alignment = char
 );
 
 
@@ -66,60 +66,60 @@ CREATE TYPE email (
 -----------------------------
 
 -- first, define the required operators
-CREATE FUNCTION email_lt(email, email) RETURNS bool
+CREATE FUNCTION email_lt(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_le(email, email) RETURNS bool
+CREATE FUNCTION email_le(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_eq(email, email) RETURNS bool
+CREATE FUNCTION email_eq(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_neq(email, email) RETURNS bool
+CREATE FUNCTION email_neq(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_deq(email, email) RETURNS bool
+CREATE FUNCTION email_deq(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_dneq(email, email) RETURNS bool
+CREATE FUNCTION email_dneq(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_ge(email, email) RETURNS bool
+CREATE FUNCTION email_ge(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION email_gt(email, email) RETURNS bool
+CREATE FUNCTION email_gt(EmailAddr, EmailAddr) RETURNS bool
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR < (
-   leftarg = email, rightarg = email, procedure = email_lt,
+   leftarg = EmailAddr, rightarg = EmailAddr, procedure = email_lt,
    commutator = > , negator = >= ,
    restrict = scalarltsel, join = scalarltjoinsel
 );
 CREATE OPERATOR <= (
-   leftarg = email, rightarg = email, procedure = email_le,
+   leftarg = EmailAddr, rightarg = EmailAddr, procedure = email_le,
    commutator = >= , negator = > ,
    restrict = scalarlesel, join = scalarlejoinsel
 );
 CREATE OPERATOR = (
-   leftarg = email, rightarg = email, procedure = email_eq,
+   leftarg = EmailAddr, rightarg = EmailAddr, procedure = email_eq,
    commutator = = ,
    -- leave out negator since we didn't create <> operator
    -- negator = <> ,
-   restrict = eqsel, join = eqjoinsel
+   restrict = eqsel, join = eqjoinsel, HASHES, MERGES
 );
 CREATE OPERATOR <> (
-   leftarg = email, rightarg = email, procedure = email_neq,
+   leftarg = EmailAddr, rightarg = EmailAddr, procedure = email_neq,
    commutator = <> ,
    -- leave out negator since we didn't create <> operator
    -- negator = = ,
-   restrict = neqsel, join = neqjoinsel
+   restrict = neqsel, join = neqjoinsel, HASHES, MERGES
 );
 CREATE OPERATOR >= (
-   leftarg = email, rightarg = email, procedure = email_ge,
+   leftarg = EmailAddr, rightarg = EmailAddr, procedure = email_ge,
    commutator = <= , negator = < ,
    restrict = scalargesel, join = scalargejoinsel
 );
 CREATE OPERATOR > (
-   leftarg = email, rightarg = email, procedure = email_gt,
+   leftarg = EmailAddr, rightarg = EmailAddr, procedure = email_gt,
    commutator = < , negator = <= ,
    restrict = scalargtsel, join = scalargtjoinsel
 );
 CREATE OPERATOR ~ (
-   leftarg    = email, 
-   rightarg   = email,
+   leftarg    = EmailAddr, 
+   rightarg   = EmailAddr,
    procedure  = email_deq,
    commutator = ~ ,
    negator    = !~ ,
@@ -130,8 +130,8 @@ CREATE OPERATOR ~ (
 );
 
 CREATE OPERATOR !~ (
-   leftarg    = email, 
-   rightarg   = email,
+   leftarg    = EmailAddr, 
+   rightarg   = EmailAddr,
    procedure  = email_dneq,
    commutator = !~ ,
    negator    = ~ ,
@@ -142,41 +142,26 @@ CREATE OPERATOR !~ (
 );
 
 -- create the support function too
-CREATE FUNCTION email_cmp(email, email) RETURNS int4
+CREATE FUNCTION email_cmp(EmailAddr, EmailAddr) RETURNS int4
    AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION email_hv(email) RETURNS int4
+CREATE FUNCTION email_hv(EmailAddr) RETURNS int4
 	AS '_OBJWD_/email' LANGUAGE C IMMUTABLE STRICT;
 -- now we can make the operator class
 CREATE OPERATOR CLASS email_ops
-    DEFAULT FOR TYPE email USING btree AS
-        OPERATOR        1       < (email,email),
-        OPERATOR        2       <= (email,email),
-        OPERATOR        3       = (email,email),
-        OPERATOR        4       >= (email,email),
-        OPERATOR        5       > (email,email),
-        FUNCTION        1       email_cmp(email, email);
+    DEFAULT FOR TYPE EmailAddr USING btree AS
+        OPERATOR        1       < (EmailAddr,EmailAddr),
+        OPERATOR        2       <= (EmailAddr,EmailAddr),
+        OPERATOR        3       = (EmailAddr,EmailAddr),
+        OPERATOR        4       >= (EmailAddr,EmailAddr),
+        OPERATOR        5       > (EmailAddr,EmailAddr),
+        FUNCTION        1       email_cmp(EmailAddr, EmailAddr);
 
 
-CREATE OPERATOR CLASS email_hash DEFAULT FOR TYPE email USING hash AS
+CREATE OPERATOR CLASS email_hash DEFAULT FOR TYPE EmailAddr USING hash AS
 OPERATOR 1    =,
-FUNCTION 1    email_hv(email);
+FUNCTION 1    email_hv(EmailAddr);
 -- now, we can define a btree index on complex types. First, let's populate
 -- the table. Note that postgres needs many more tuples to start using the
 -- btree index during selects.
 
-
-create table UserSessions (
-   username  email,
-   loggedIn  timestamp,
-   loggedOut timestamp
-   -- etc. etc.
-);
-
-insert into UserSessions(username,loggedIn,loggedOut) values
-('jas@cse.unsw.edu.au','2012-07-01 15:45:55','2012-07-01 15:51:20'),
-('jas@cse.unsw.EDU.AU','2012-07-01 15:50:30','2012-07-01 15:53:15'),
-('m.mouse@disney.com','2012-07-01 15:51:11','2012-07-01 16:01:06'),
-('a-user@fast-money.com','2012-07-01 15:52:25','2012-07-01 16:10:15');
-
-create index on UserSessions using hash (username);
