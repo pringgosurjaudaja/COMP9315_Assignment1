@@ -277,7 +277,7 @@ email_deq(PG_FUNCTION_ARGS)
 	EmailAddr    *a = (EmailAddr *) PG_GETARG_POINTER(0);
 	EmailAddr    *b = (EmailAddr *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(strcmp(a->second, b->second)==0);
+	PG_RETURN_BOOL(strcmp(a->second, b->second)==0);
 }
 
 PG_FUNCTION_INFO_V1(email_dneq);
@@ -288,7 +288,7 @@ email_dneq(PG_FUNCTION_ARGS)
 	EmailAddr    *a = (EmailAddr *) PG_GETARG_POINTER(0);
 	EmailAddr    *b = (EmailAddr *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(strcmp(a->second, b->second)!=0);
+	PG_RETURN_BOOL(strcmp(a->second, b->second)!=0);
 }
 PG_FUNCTION_INFO_V1(email_hv);
 Datum email_hv(PG_FUNCTION_ARGS)
@@ -302,5 +302,5 @@ email_cmp(PG_FUNCTION_ARGS)
 	EmailAddr    *a = (EmailAddr *) PG_GETARG_POINTER(0);
 	EmailAddr    *b = (EmailAddr *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_INT32(email_cmp_internal(a, b)!=0);
+	PG_RETURN_INT32(email_cmp_internal(a, b));
 }

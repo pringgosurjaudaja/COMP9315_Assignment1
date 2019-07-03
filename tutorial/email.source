@@ -164,4 +164,15 @@ FUNCTION 1    email_hv(EmailAddr);
 -- now, we can define a btree index on complex types. First, let's populate
 -- the table. Note that postgres needs many more tuples to start using the
 -- btree index during selects.
+create table Users (
+	username    EmailAddr,
+	realname    text,
+	primary key (username)
+);
 
+create table Sessions (
+	sessionID   integer,
+	username    EmailAddr references Users(username),
+	loggedin    timestamp,
+	primary key (sessionID)
+);
